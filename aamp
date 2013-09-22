@@ -1,5 +1,6 @@
 #!/usr/bin/python2
 import argparse
+import json
 import requests
 
 def play(args):
@@ -23,6 +24,30 @@ def prev(args):
 def nextSong(args):
     r = requests.post(args.api_base+"/control", data="next")
 
+def search(args):
+    query = {"parts":[]}
+    if len(args.query) == 0:
+        query['parts'].append({})
+    for q in args.query:
+        part = {}
+        if q.startswith('-'):
+            part['exclude'] = True
+            q = q[1:]
+
+        if q.startswith("genre:"):
+            part["genre"] = q[q.index(':')+1:]
+        elif q.startswith("artist:"):
+            part["artist"] = q[q.index(':')+1:]
+        elif q.startswith("album:"):
+            part["album"] = q[q.index(':')+1:]
+        elif q.startswith("title:"):
+            part["title"] = q[q.index(':')+1:]
+        else:
+            part["any"] = q
+        query['parts'].append(part)
+    r = requests.post(args.api_base+"/query", data=json.dumps(query))
+    print r.content
+
 if __name__ == "__main__":
     args = None
     parser = argparse.ArgumentParser(description='A client for the AAMP Advanced Music Player.')
@@ -45,13 +70,15 @@ if __name__ == "__main__":
     parser_prev.set_defaults(func=prev)
     parser_next = subparsers.add_parser('next', help="Skip to the next song.")
     parser_next.set_defaults(func=nextSong)
+    parser_search = subparsers.add_parser('search', help="Query the music library.")
+    parser_search.add_argument('query', nargs='*')
+    parser_search.set_defaults(func=search)
     args = parser.parse_args()
     if args.server:
         args.api_base = "http://"+args.server+":13531"
     else:
         args.api_base = "http://localhost:13531"
 
-    print args
     if args.func:
         args.func(args)
 
