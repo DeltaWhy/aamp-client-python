@@ -1,0 +1,57 @@
+#!/usr/bin/python2
+import argparse
+import requests
+
+def play(args):
+    r = requests.post(args.api_base+"/control", data="play")
+
+def pause(args):
+    r = requests.post(args.api_base+"/control", data="pause")
+
+def volume(args):
+    r = requests.post(args.api_base+"/control", data="volume="+args.volume)
+
+def seek(args):
+    r = requests.post(args.api_base+"/control", data="seek="+args.position)
+
+def skipTo(args):
+    r = requests.post(args.api_base+"/control", data="skipTo="+args.song_id)
+
+def prev(args):
+    r = requests.post(args.api_base+"/control", data="prev")
+
+def nextSong(args):
+    r = requests.post(args.api_base+"/control", data="next")
+
+if __name__ == "__main__":
+    args = None
+    parser = argparse.ArgumentParser(description='A client for the AAMP Advanced Music Player.')
+    parser.add_argument('-s','--server', help="Where to find the server.")
+    subparsers = parser.add_subparsers(help="The command to run.")
+    parser_play = subparsers.add_parser('play', help="Start playing from the current position in the queue.")
+    parser_play.set_defaults(func=play)
+    parser_pause = subparsers.add_parser('pause', help="Pause playback.")
+    parser_pause.set_defaults(func=pause)
+    parser_volume = subparsers.add_parser('volume', help="Set volume.")
+    parser_volume.add_argument('volume')
+    parser_volume.set_defaults(func=volume)
+    parser_seek = subparsers.add_parser('seek', help="Seek to a position within the current song.")
+    parser_seek.add_argument('position', help="Position in seconds.")
+    parser_seek.set_defaults(func=seek)
+    parser_skip = subparsers.add_parser('skip', help="Skip to a specific song in the queue.")
+    parser_skip.add_argument('song_id', help="Id of the requested song.")
+    parser_skip.set_defaults(func=skipTo)
+    parser_prev = subparsers.add_parser('prev', help="Go back to the previous song.")
+    parser_prev.set_defaults(func=prev)
+    parser_next = subparsers.add_parser('next', help="Skip to the next song.")
+    parser_next.set_defaults(func=nextSong)
+    args = parser.parse_args()
+    if args.server:
+        args.api_base = "http://"+args.server+":13531"
+    else:
+        args.api_base = "http://localhost:13531"
+
+    print args
+    if args.func:
+        args.func(args)
+
